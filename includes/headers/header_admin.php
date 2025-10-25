@@ -1,8 +1,8 @@
 <?php
 /**
- * Admin Header (Refined)
+ * Admin Header (Refined & Corrected)
  *
- * This header is for the admin backend. It includes a sidebar navigation.
+ * This header is for the admin backend. Includes sidebar navigation.
  */
 
 // We assume config.php, db.php, and helpers.php are loaded by the page
@@ -10,12 +10,28 @@ require_once __DIR__ . '/../notifications.php';
 
 // Fetch notifications
 $user_id = $_SESSION['user_id'] ?? 0;
-$unread_count = get_unread_notification_count($pdo, $user_id);
-$notifications = get_notifications($pdo, $user_id, 5); // Fetch notifications for the dropdown
+// Make sure $pdo is available here (it should be passed via get_header($pdo))
+$unread_count = 0;
+$notifications = [];
+$pending_hostels_count = 0;
 
-// Get pending hostels count
-$stmt_pending = $pdo->query("SELECT COUNT(id) FROM hostels WHERE status = 'pending'");
-$pending_hostels_count = $stmt_pending->fetchColumn();
+if (isset($pdo)) {
+    $unread_count = get_unread_notification_count($pdo, $user_id);
+    $notifications = get_notifications($pdo, $user_id, 5); // Fetch notifications for the dropdown
+
+    // Get pending hostels count
+    try {
+        $stmt_pending = $pdo->query("SELECT COUNT(id) FROM hostels WHERE status = 'pending'");
+        $pending_hostels_count = $stmt_pending->fetchColumn();
+    } catch (PDOException $e) {
+        // Log error or handle gracefully if DB isn't ready
+        error_log("Failed to get pending hostel count: " . $e->getMessage());
+        $pending_hostels_count = 0; // Default to 0 on error
+    }
+} else {
+    // Optional: Log a warning if $pdo isn't set, although helpers.php should trigger an error first
+    error_log("Warning: \$pdo not available in header_admin.php");
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,22 +81,27 @@ $pending_hostels_count = $stmt_pending->fetchColumn();
                         <div class="notification-list-wrapper">
                             <?php if (empty($notifications)): ?>
                                 <li class="px-3 py-3 text-muted text-center">
-                                    <i class_="bi bi-bell-slash d-block fs-4"></i>
-                                    <small>No new notifications.</small>
+                                    <i class="bi bi-bell-slash d-block fs-4 mb-1"></i> <small>No new notifications.</small>
                                 </li>
                             <?php else: ?>
                                 <?php foreach ($notifications as $notif): ?>
                                     <li>
-                                        <a class="dropdown-item notification-item <?php echo $notif['is_read'] ? '' : 'fw-bold'; ?>" href="<?php echo $notif['link'] ? sanitize($notif['link']) : '#'; ?>" data-id="<?php echo $notif['id']; ?>">
+                                        <?php
+                                        // **THIS IS THE FIX:** Construct the full URL
+                                        $notification_url = '#'; // Default if no link
+                                        if (!empty($notif['link'])) {
+                                            $relative_link = ltrim(sanitize($notif['link']), '/');
+                                            $notification_url = BASE_URL . '/' . $relative_link;
+                                        }
+                                        ?>
+                                        <a class="dropdown-item notification-item <?php echo $notif['is_read'] ? '' : 'fw-bold'; ?>" href="<?php echo $notification_url; ?>" data-id="<?php echo $notif['id']; ?>">
                                             <div class="d-flex">
-                                                <div class="pe-2">
-                                                    <i class="bi <?php 
+                                                <div class="pe-2 pt-1"> <i class="bi <?php 
                                                         $icon_map = ['success' => 'bi-check-circle-fill text-success', 'info' => 'bi-info-circle-fill text-primary', 'warning' => 'bi-exclamation-triangle-fill text-warning', 'danger' => 'bi-x-circle-fill text-danger'];
                                                         echo $icon_map[$notif['type']] ?? 'bi-bell-fill text-secondary';
                                                     ?> fs-5"></i>
                                                 </div>
-                                                <div class_="notification-content">
-                                                    <small class_="d-block"><?php echo sanitize($notif['title']); ?></small>
+                                                <div class="notification-content"> <small class="d-block"><?php echo sanitize($notif['title']); ?></small>
                                                     <small class="text-muted d-block" style="font-size: 0.8em;"><?php echo substr(sanitize($notif['message']), 0, 70); ?>...</small>
                                                 </div>
                                             </div>

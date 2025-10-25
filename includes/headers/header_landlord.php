@@ -5,15 +5,21 @@
  * This header is shown to logged-in landlords.
  */
 
-// **FIX:** We ONLY need to include notifications.php here.
-// The $pdo, $_SESSION, and constants (BASE_URL)
-// are already available from the parent file (e.g., dashboard.php).
+// We ONLY need to include notifications.php here.
 require_once __DIR__ . '/../notifications.php';
 
 // Fetch notifications
 $user_id = $_SESSION['user_id'] ?? 0;
-$unread_count = get_unread_notification_count($pdo, $user_id);
-$notifications = get_notifications($pdo, $user_id, 5);
+// Make sure $pdo is available here (it should be passed via get_header($pdo))
+$unread_count = 0;
+$notifications = [];
+
+if (isset($pdo)) {
+    $unread_count = get_unread_notification_count($pdo, $user_id);
+    $notifications = get_notifications($pdo, $user_id, 5);
+} else {
+    error_log("Warning: \$pdo not available in header_landlord.php");
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">
@@ -24,8 +30,7 @@ $notifications = get_notifications($pdo, $user_id, 5);
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;7E00&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"> <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
 </head>
 <body class="dashboard-body bg-light d-flex flex-column h-100">
 
@@ -65,33 +70,54 @@ $notifications = get_notifications($pdo, $user_id, 5);
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="notificationDropdown" style="width: 300px;">
                         <li class="px-3 py-2 fw-bold">Notifications</li>
-                        <li><hr class="dropdown-divider"></li>
-                        <?php if (empty($notifications)): ?>
-                            <li class="px-3 py-2 text-muted text-center">No new notifications.</li>
-                        <?php else: ?>
-                            <?php foreach ($notifications as $notif): ?>
-                                <li>
-                                    <a class="dropdown-item notification-item <?php echo $notif['is_read'] ? '' : 'fw-bold'; ?>" href="<?php echo $notif['link'] ? sanitize($notif['link']) : '#'; ?>" data-id="<?php echo $notif['id']; ?>">
-                                        <small class="d-block text-<?php echo sanitize($notif['type']); ?>"><?php echo sanitize($notif['title']); ?></small>
-                                        <small class="d-block text-muted"><?php echo substr(sanitize($notif['message']), 0, 50); ?>...</small>
-                                    </a>
+                        <li><hr class="dropdown-divider my-0"></li>
+                         <div class="notification-list-wrapper"> <?php if (empty($notifications)): ?>
+                                <li class="px-3 py-3 text-muted text-center"> <i class="bi bi-bell-slash d-block fs-4 mb-1"></i>
+                                    <small>No new notifications.</small>
                                 </li>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center text-orange" href="<?php echo BASE_URL; ?>/landlord/notifications.php">View All</a></li>
+                            <?php else: ?>
+                                <?php foreach ($notifications as $notif): ?>
+                                    <li>
+                                        <?php
+                                        // **THIS IS THE FIX:** Construct the full URL
+                                        $notification_url = '#'; // Default if no link
+                                        if (!empty($notif['link'])) {
+                                            $relative_link = ltrim(sanitize($notif['link']), '/');
+                                            $notification_url = BASE_URL . '/' . $relative_link;
+                                        }
+                                        ?>
+                                        <a class="dropdown-item notification-item <?php echo $notif['is_read'] ? '' : 'fw-bold'; ?>" href="<?php echo $notification_url; ?>" data-id="<?php echo $notif['id']; ?>">
+                                            <div class="d-flex"> <div class="pe-2 pt-1">
+                                                     <i class="bi <?php
+                                                        $icon_map = ['success' => 'bi-check-circle-fill text-success', 'info' => 'bi-info-circle-fill text-primary', 'warning' => 'bi-exclamation-triangle-fill text-warning', 'danger' => 'bi-x-circle-fill text-danger'];
+                                                        echo $icon_map[$notif['type']] ?? 'bi-bell-fill text-secondary';
+                                                     ?> fs-5"></i>
+                                                </div>
+                                                <div class="notification-content">
+                                                    <small class="d-block"><?php echo sanitize($notif['title']); ?></small>
+                                                    <small class="d-block text-muted" style="font-size: 0.8em;"><?php echo substr(sanitize($notif['message']), 0, 70); ?>...</small>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                        <li><hr class="dropdown-divider my-0"></li>
+                        <li><a class="dropdown-item text-center text-orange py-2" href="<?php echo BASE_URL; ?>/landlord/notifications.php">
+                            <small>View All Notifications</small>
+                        </a></li>
                     </ul>
                 </li>
                 
                 <li class="nav-item dropdown ms-lg-2">
                     <a class="nav-link dropdown-toggle text-dark d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="<?php echo BASE_URL; ?>/assets/images/default_avatar.png" alt="Avatar" class="rounded-circle" width="30" height="30">
-                        <span class="ms-2 d-none d-lg-inline"><?php echo sanitize($_SESSION['user_name'] ?? 'User'); ?></span>
+                        <img src="<?php echo BASE_URL; ?>/assets/images/default_avatar.png" alt="Avatar" class="rounded-circle" width="32" height="32"> <span class="ms-2 d-none d-lg-inline"><?php echo sanitize($_SESSION['user_name'] ?? 'User'); ?></span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="profileDropdown">
-                        <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/landlord/profile.php">My Profile</a></li>
+                        <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>/landlord/profile.php"><i class="bi bi-person-fill me-2"></i>My Profile</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="<?php echo BASE_URL; ?>/logout.php">Logout</a></li>
+                        <li><a class="dropdown-item text-danger" href="<?php echo BASE_URL; ?>/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
                     </ul>
                 </li>
             </ul>
