@@ -1,0 +1,13 @@
+# Sensitive configuration
+includes/config.php
+
+# IDE/Editor specific files
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Optional: Composer dependencies (if you add them later)
+# vendor/

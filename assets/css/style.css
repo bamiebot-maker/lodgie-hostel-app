@@ -1,0 +1,160 @@
+
+
+
+/*
+ * Lodgie - Custom Stylesheet
+ * Primary Color: #f97316 (Orange)
+ * Font: Poppins
+ */
+
+/* --- Root Variables --- */
+:root {
+    --bs-orange: #f97316;
+    --bs-dark-orange: #c2410c; /* Darker orange for admin */
+    --bs-light-gray: #f8f9fa;
+    --bs-font-sans-serif: 'Poppins', sans-serif;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--bs-light-gray);
+}
+
+.dashboard-body {
+    background-color: #f8f9fa;
+}
+
+/* --- Theme Colors --- */
+.text-orange {
+    color: var(--bs-orange) !important;
+}
+
+.bg-orange {
+    background-color: var(--bs-orange) !important;
+}
+
+.bg-dark-orange {
+    background-color: var(--bs-dark-orange) !important;
+}
+
+.btn-orange {
+    background-color: var(--bs-orange);
+    border-color: var(--bs-orange);
+    color: #fff;
+    font-weight: 500;
+}
+
+.btn-orange:hover {
+    background-color: #ea580c; /* Slightly darker */
+    border-color: #ea580c;
+    color: #fff;
+}
+
+.btn-outline-orange {
+    color: var(--bs-orange);
+    border-color: var(--bs-orange);
+    font-weight: 500;
+}
+
+.btn-outline-orange:hover {
+    background-color: var(--bs-orange);
+    border-color: var(--bs-orange);
+    color: #fff;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--bs-orange);
+    box-shadow: 0 0 0 0.25rem rgba(249, 115, 22, 0.25);
+}
+
+/* --- Component Styling --- */
+.navbar-brand.text-orange {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.form-wrapper {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Landing Page Hero --- */
+.hero-section {
+    background: linear-gradient(135deg, var(--bs-orange) 0%, #fb923c 100%);
+    padding: 6rem 0;
+    color: #fff;
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    font-weight: 700;
+}
+
+.hero-search-bar {
+    max-width: 700px;
+    margin: 2rem auto 0;
+}
+
+.hero-search-bar .form-control {
+    border-radius: 50rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+}
+
+.hero-search-bar .btn {
+    border-radius: 50rem;
+    padding: 0.75rem 2rem;
+}
+
+/* --- Hostel Card --- */
+.hostel-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hostel-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.hostel-card img {
+    height: 200px;
+    object-fit: cover;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+}
+
+.hostel-card .price {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--bs-orange);
+}
+
+.hostel-card .price .duration {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #6c757d;
+}
+
+/* --- Notification Dropdown --- */
+.notification-item {
+    white-space: normal;
+}
+.notification-item small {
+    display: block;
+}
+
+/* --- Utility --- */
+.rounded-lg {
+    border-radius: 0.75rem !important;
+}
