@@ -20,6 +20,12 @@ protect_page('tenant');
 // --- Main Logic ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
+    // 0. Verify CSRF Token (Security: prevent cross-site request forgery)
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $_SESSION['error_flash'] = 'Invalid request. Please try again.';
+        redirect('tenant/bookings.php');
+    }
+
     // 1. Get Booking ID from POST
     if (empty($_POST['booking_id'])) {
         $_SESSION['error_flash'] = 'Invalid booking attempt.';

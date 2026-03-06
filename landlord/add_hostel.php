@@ -67,7 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_hostel'])) {
             $file_error = $_FILES['hostel_images']['error'][$i];
 
             if ($file_error === UPLOAD_ERR_OK) {
-                if (!in_array($file_type, $allowed_types)) {
+                // Security: use finfo to get REAL mime type from file bytes, not browser-provided type
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $real_mime = $finfo->file($file_tmp);
+                if (!in_array($real_mime, $allowed_types)) {
                     $errors[] = "Invalid file type: $file_name. Only JPG, JPEG, PNG allowed.";
                     continue;
                 }
@@ -139,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_hostel'])) {
                     @unlink($upload_dir . $image_path);
                 }
             }
-            $_SESSION['error_flash'] = 'Database error. Could not add hostel. ' . $e->getMessage();
+            $_SESSION['error_flash'] = 'Database error. Could not add hostel. Please try again.';
             error_log('Add Hostel Error: ' . $e->getMessage());
             redirect('landlord/add_hostel.php');
         }

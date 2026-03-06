@@ -90,6 +90,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['book_now'])) {
     $total_price = (float) $hostel['price_per_month'] * $duration_months;
     
     try {
+        // 5.5 Prevent duplicate pending bookings for same hostel
+        $stmt_dup = $pdo->prepare("SELECT id FROM bookings WHERE tenant_id = ? AND hostel_id = ? AND status = 'pending' LIMIT 1");
+        $stmt_dup->execute([$tenant_id, $hostel_id]);
+        if ($stmt_dup->fetch()) {
+            $_SESSION['error_flash'] = 'You already have a pending booking for this hostel. Please pay or cancel it first.';
+            redirect('tenant/bookings.php');
+        }
+
         // 6. Create 'pending' booking record
         $sql_book = "
             INSERT INTO bookings (tenant_id, hostel_id, landlord_id, start_date, duration_months, total_price, status)
@@ -251,7 +259,7 @@ get_header($pdo);
                             </div>
                             
                             <div class="d-grid">
-                                <button type.submit" name="book_now" class="btn btn-orange btn-lg">Book Now</button>
+                                <button type="submit" name="book_now" class="btn btn-orange btn-lg">Book Now</button>
                             </div>
                         </form>
                     <?php elseif (check_role('landlord')): ?>

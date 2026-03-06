@@ -70,7 +70,8 @@ function generate_csrf_token() {
         try {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         } catch (Exception $e) {
-            $_SESSION['csrf_token'] = 'fallback_token_' . time();
+            // Fallback: still reasonably random (avoid time-based predictable tokens)
+            $_SESSION['csrf_token'] = md5(uniqid(rand(), true));
         }
     }
     return $_SESSION['csrf_token'];

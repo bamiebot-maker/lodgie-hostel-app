@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  
     // 2. Sanitize and Validate Inputs
     $name = sanitize($_POST['name']);
-    $email = sanitize($_POST['email']);
+    $email = trim($_POST['email']); // Validate BEFORE sanitizing for HTML output
     $phone = sanitize($_POST['phone']);
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($name)) $errors[] = "Full name is required.";
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Invalid email address.";
+    $email = htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); // Now safe to HTML-encode
     if (strlen($password) < 8) $errors[] = "Password must be at least 8 characters long.";
     if ($password !== $confirm_password) $errors[] = "Passwords do not match.";
     if (!in_array($role, ['landlord', 'tenant'])) $errors[] = "Invalid role selected.";
