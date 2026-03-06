@@ -26,10 +26,14 @@
 </head>
 <body class="d-flex flex-column h-100">
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <?php
+    $is_home = basename($_SERVER['PHP_SELF']) === 'index.php';
+    $nav_class = $is_home ? 'navbar-transparent fixed-top' : 'navbar-light bg-white shadow-sm sticky-top';
+    ?>
+    <nav id="mainNav" class="navbar navbar-expand-lg <?php echo $nav_class; ?>">
         <div class="container">
-            <a class="navbar-brand text-orange fw-bold" href="<?php echo BASE_URL; ?>/index.php">
-                <i class="bi bi-house-door-fill"></i> <?php echo SITE_NAME; ?>
+            <a class="navbar-brand fw-bold" href="<?php echo BASE_URL; ?>/index.php">
+                <i class="bi bi-house-door-fill text-orange"></i> <?php echo SITE_NAME; ?>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#publicNavbar" aria-controls="publicNavbar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -37,10 +41,10 @@
             <div class="collapse navbar-collapse" id="publicNavbar">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="<?php echo BASE_URL; ?>/index.php">Home</a>
+                        <a class="nav-link <?php echo $is_home ? 'active' : ''; ?>" aria-current="page" href="<?php echo BASE_URL; ?>/index.php">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>/browse.php">Browse Hostels</a>
+                        <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'browse.php' ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/browse.php">Browse Hostels</a>
                     </li>
                     <li class="nav-item mx-lg-2">
                         <a class="nav-link" href="<?php echo BASE_URL; ?>/login.php">Login</a>
