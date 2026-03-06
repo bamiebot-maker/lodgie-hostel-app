@@ -58,6 +58,17 @@ if ($event->event === 'charge.success') {
     $booking_id = $data->metadata->booking_id ?? 0;
     $tenant_id = $data->metadata->tenant_id ?? 0;
 
+    // Security: Verify amount matches the booking price
+    $stmt_amt = $pdo->prepare("SELECT total_price FROM bookings WHERE id = ?");
+    $stmt_amt->execute([$booking_id]);
+    $expected_amount = (float) $stmt_amt->fetchColumn();
+
+    if ($expected_amount != $amount_paid) {
+        http_response_code(400);
+        error_log("Paystack Webhook: Amount mismatch for ref $paystack_reference. Expected $expected_amount got $amount_paid");
+        exit('Amount mismatch');
+    }
+
     // Check for essential metadata
     if ($booking_id == 0 || $tenant_id == 0) {
         http_response_code(400);
@@ -109,9 +120,9 @@ if ($event->event === 'charge.success') {
         
         create_notification($pdo, $tenant_id, 'Payment Successful', "Your payment of $formatted_amount for booking #$booking_id was successful.", 'success', 'tenant/bookings.php');
         create_notification($pdo, $landlord_id, 'New Booking Payment', "You received a new payment of $formatted_amount for booking #$booking_id.", 'success', 'landlord/bookings.php');
-        
-        $admin_id = $pdo->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1")->fetchColumn();
-        if ($admin_id) {
+        // To Admin - alert all admins
+        $admins = $pdo->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($admins as $admin_id) {
             create_notification($pdo, $admin_id, 'New Payment Received', "A new payment of $formatted_amount was received for booking #$booking_id.", 'info', 'admin/payments.php');
         }
 

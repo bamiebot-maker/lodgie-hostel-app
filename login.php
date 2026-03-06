@@ -23,6 +23,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['error_flash'] = 'Invalid request. Please try again.';
         redirect('login.php');
     }
+
+    // Rate Limiting
+    if (!isset($_SESSION['login_attempts'])) {
+        $_SESSION['login_attempts'] = 0;
+        $_SESSION['last_login_attempt'] = time();
+    }
+    if ($_SESSION['login_attempts'] >= 5) {
+        $lockout_time = 15 * 60; // 15 mins
+        if (time() - $_SESSION['last_login_attempt'] < $lockout_time) {
+            $remaining = ceil(($lockout_time - (time() - $_SESSION['last_login_attempt'])) / 60);
+            $_SESSION['error_flash'] = "Too many failed attempts. Please try again in $remaining minutes.";
+            redirect('login.php');
+        } else {
+            // Reset after lockout
+            $_SESSION['login_attempts'] = 0;
+        }
+    }
+    $_SESSION['last_login_attempt'] = time();
  
     $email = sanitize($_POST['email']);
     $password = $_POST['password'];
@@ -41,6 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['role'] = $user['role'];
  
+            // Clear rate limiting on success
+            unset($_SESSION['login_attempts']);
+            unset($_SESSION['last_login_attempt']);
+
             // Redirect to role-based dashboard
             $dashboard_map = [
                 'admin' => 'admin/dashboard.php',
@@ -51,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  
         } else {
             // **This is what's happening:**
+            $_SESSION['login_attempts']++;
             $_SESSION['error_flash'] = 'Invalid email or password.';
             redirect('login.php');
         }

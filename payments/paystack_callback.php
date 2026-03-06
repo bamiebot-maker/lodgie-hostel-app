@@ -60,6 +60,24 @@ try {
         $booking_id = $result->data->metadata->booking_id ?? 0;
         $tenant_id = $result->data->metadata->tenant_id ?? 0;
 
+        // Security: Ensure logged-in user matches payment
+        if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] != $tenant_id) {
+            echo '<div class="container p-5 text-center"><div class="alert alert-danger">Security error: You are not authorized to verify this payment.</div></div>';
+            get_footer();
+            exit();
+        }
+
+        // Security: Verify amount matches the booking price
+        $stmt_amt = $pdo->prepare("SELECT total_price FROM bookings WHERE id = ?");
+        $stmt_amt->execute([$booking_id]);
+        $expected_amount = (float) $stmt_amt->fetchColumn();
+
+        if ($expected_amount != $amount_paid) {
+             echo '<div class="container p-5 text-center"><div class="alert alert-danger">Payment amount mismatch. Please contact support.</div></div>';
+             get_footer();
+             exit();
+        }
+
         // 5. Check our DB to prevent double-processing
         $stmt_check = $pdo->prepare("SELECT status FROM payments WHERE paystack_reference = ?");
         $stmt_check->execute([$paystack_reference]);
@@ -103,10 +121,9 @@ try {
         $link = 'landlord/bookings.php';
         create_notification($pdo, $landlord_id, 'New Booking Payment', "You received a new payment of $formatted_amount for booking #$booking_id.", 'success', $link);
 
-        // To Admin
-        // Get first admin
-        $admin_id = $pdo->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1")->fetchColumn();
-        if ($admin_id) {
+        // To Admin - alert all admins
+        $admins = $pdo->query("SELECT id FROM users WHERE role = 'admin'")->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($admins as $admin_id) {
             $link = 'admin/payments.php';
             create_notification($pdo, $admin_id, 'New Payment Received', "A new payment of $formatted_amount was received for booking #$booking_id.", 'info', $link);
         }
